@@ -1,22 +1,26 @@
 ﻿using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Oscetch.MonoGame.AStar
 {
-    internal class BoundBasedGraph : IWeightedGraph
+    public class BoundBasedGraph : IWeightedGraph
     {
-        public Vector2 Origin { get; set; }
-
         private readonly Point _size;
+        private readonly Vector2 _origin;
         private readonly int _smallestStep;
-        private readonly Predicate<Vector2> _isPassable;
+        private readonly Func<Vector2, Vector2, bool> _isPassable;
 
-        public BoundBasedGraph(Point size, Predicate<Vector2> isPassable)
+        public BoundBasedGraph(Point size, Func<Vector2, Vector2, bool> isPassable) : this(size, Math.Min(size.X, size.Y), isPassable) { }
+        public BoundBasedGraph(Point size, int smallestStep, Func<Vector2, Vector2, bool> isPassable) : this(size, size.ToVector2() / 2f, smallestStep, isPassable) { }
+
+        public BoundBasedGraph(Point size, Vector2 origin, int smallestStep, Func<Vector2, Vector2, bool> isPassable)
         {
             _size = size;
+            _origin = origin;
+            _smallestStep = smallestStep;
             _isPassable = isPassable;
-            _smallestStep = Math.Min(size.X, size.Y);
         }
 
         public double Cost(Vector2 a, Vector2 b)
@@ -27,37 +31,30 @@ namespace Oscetch.MonoGame.AStar
 
         public bool Intersects(Vector2 position, Vector2 target)
         {
-            return GetBoundsFromPosition(position).Contains(target);
+            var withoutOriginPosition = (position - _origin).ToPoint();
+            var bounds = new Rectangle(withoutOriginPosition, _size);
+            return bounds.Contains(target);
         }
 
         public IEnumerable<Vector2> PassableNeighbors(Vector2 id)
         {
-            foreach (var position in GetPossiblePositions(id))
-            {
-                if (_isPassable(position))
-                {
-                    yield return position;
-                }
-            } 
+            return GetPossiblePositions(id).Where(x => _isPassable(id, x));
         }
 
         private IEnumerable<Vector2> GetPossiblePositions(Vector2 id)
         {
             var sizeVector = _size.ToVector2();
 
-            yield return id - sizeVector; // top left
-            yield return id - new Vector2(sizeVector.X, 0f); // left
-            yield return id - new Vector2(sizeVector.X, -sizeVector.Y); // bottom left
+            yield return id - new Vector2(_smallestStep); // top left
+            yield return id - new Vector2(_smallestStep, 0); // left
+            yield return id - new Vector2(_smallestStep, -_smallestStep); // bottom left
 
-            yield return id - new Vector2(0, sizeVector.Y); // top
-            yield return id + new Vector2(0, sizeVector.Y); // bottom
+            yield return id - new Vector2(0, _smallestStep); // top
+            yield return id + new Vector2(0, _smallestStep); // bottom
 
             yield return id + sizeVector; // top right
-            yield return id + new Vector2(sizeVector.X, 0f); // right
-            yield return id + new Vector2(sizeVector.X, -sizeVector.Y); // bottom right
+            yield return id + new Vector2(_smallestStep, 0); // right
+            yield return id + new Vector2(_smallestStep, -_smallestStep); // bottom right
         }
-
-        private Rectangle GetBoundsFromPosition(Vector2 position) => new(ToOriginPoint(position).ToPoint(), _size);
-        private Vector2 ToOriginPoint(Vector2 position) => new(position.X + (_size.X * Origin.X), position.Y + (_size.Y * Origin.Y));
     }
 }

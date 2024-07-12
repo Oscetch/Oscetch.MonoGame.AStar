@@ -8,6 +8,8 @@ namespace Oscetch.MonoGame.AStar
     {
         private readonly IWeightedGraph _graph;
 
+        public double MaxMovementCost { get; set; } = 100d;
+
         public PathFinder(IWeightedGraph graph)
         {
             _graph = graph;
@@ -27,12 +29,19 @@ namespace Oscetch.MonoGame.AStar
             {
                 var current = frontier.Dequeue();
 
-
-                if (_graph.Intersects(current, end)) break;
+                if (_graph.Intersects(current, end))
+                {
+                    cameFrom[end] = current;
+                    break;
+                }
 
                 foreach (var nextLocation in _graph.PassableNeighbors(current))
                 {
                     var newCost = costSoFar[current] + _graph.Cost(current, nextLocation);
+                    if (newCost > MaxMovementCost)
+                    {
+                        continue;
+                    }
                     if (!costSoFar.ContainsKey(nextLocation) || newCost < costSoFar[nextLocation])
                     {
                         costSoFar[nextLocation] = newCost;
@@ -40,6 +49,11 @@ namespace Oscetch.MonoGame.AStar
                         cameFrom[nextLocation] = current;
                     }
                 }
+            }
+
+            if (!cameFrom.ContainsKey(end))
+            {
+                return new List<Vector2>();
             }
 
             var path = new List<Vector2>();
