@@ -5,23 +5,15 @@ using System.Linq;
 
 namespace Oscetch.MonoGame.AStar
 {
-    public class BoundBasedGraph : IWeightedGraph
+    public class BoundBasedGraph(Point size, Vector2 origin, int smallestStep, Func<Vector2, Vector2, bool> isPassable) : IWeightedGraph
     {
-        private readonly Point _size;
-        private readonly Vector2 _origin;
-        private readonly int _smallestStep;
-        private readonly Func<Vector2, Vector2, bool> _isPassable;
+        private readonly Point _size = size;
+        private readonly Vector2 _origin = origin;
+        private readonly int _smallestStep = smallestStep;
+        private readonly Func<Vector2, Vector2, bool> _isPassable = isPassable;
 
         public BoundBasedGraph(Point size, Func<Vector2, Vector2, bool> isPassable) : this(size, Math.Min(size.X, size.Y), isPassable) { }
         public BoundBasedGraph(Point size, int smallestStep, Func<Vector2, Vector2, bool> isPassable) : this(size, size.ToVector2() / 2f, smallestStep, isPassable) { }
-
-        public BoundBasedGraph(Point size, Vector2 origin, int smallestStep, Func<Vector2, Vector2, bool> isPassable)
-        {
-            _size = size;
-            _origin = origin;
-            _smallestStep = smallestStep;
-            _isPassable = isPassable;
-        }
 
         public double Cost(Vector2 a, Vector2 b)
         {

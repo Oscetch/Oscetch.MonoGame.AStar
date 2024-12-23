@@ -4,16 +4,11 @@ using System.Collections.Generic;
 
 namespace Oscetch.MonoGame.AStar
 {
-    public class PathFinder
+    public class PathFinder(IWeightedGraph graph)
     {
-        private readonly IWeightedGraph _graph;
+        private readonly IWeightedGraph _graph = graph;
 
         public double MaxMovementCost { get; set; } = 100d;
-
-        public PathFinder(IWeightedGraph graph)
-        {
-            _graph = graph;
-        }
 
         public List<Vector2> Find(Vector2 start, Vector2 end)
         {
@@ -42,9 +37,10 @@ namespace Oscetch.MonoGame.AStar
                     {
                         continue;
                     }
-                    if (!costSoFar.ContainsKey(nextLocation) || newCost < costSoFar[nextLocation])
+                    if (!costSoFar.TryGetValue(nextLocation, out double value) || newCost < value)
                     {
-                        costSoFar[nextLocation] = newCost;
+                        value = newCost;
+                        costSoFar[nextLocation] = value;
                         frontier.Enqueue(nextLocation, newCost + Heuristic(nextLocation, end));
                         cameFrom[nextLocation] = current;
                     }

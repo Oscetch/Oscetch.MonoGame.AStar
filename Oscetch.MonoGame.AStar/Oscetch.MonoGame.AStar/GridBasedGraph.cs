@@ -5,16 +5,10 @@ using System.Linq;
 
 namespace Oscetch.MonoGame.AStar
 {
-    internal class GridBasedGraph : IWeightedGraph
+    internal class GridBasedGraph(Vector2 gridCellSize, Func<Vector2, Vector2, bool> isPassable) : IWeightedGraph
     {
-        private readonly Vector2 _gridCellSize;
-        private readonly Func<Vector2, Vector2, bool> _isPassable;
-
-        public GridBasedGraph(Vector2 gridCellSize, Func<Vector2, Vector2, bool> isPassable)
-        {
-            _gridCellSize = gridCellSize;
-            _isPassable = isPassable;
-        }
+        private readonly Vector2 _gridCellSize = gridCellSize;
+        private readonly Func<Vector2, Vector2, bool> _isPassable = isPassable;
 
         public Vector2 FitPositionToGrid(Vector2 position) => position - new Vector2(position.X % _gridCellSize.X, position.Y % _gridCellSize.Y);
 
